@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@700&display=swap');
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      min-height: 100vh;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .celebration-text {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 100;
+      width: 100%;
+      text-align: center;
+    }
+
+    .main-text {
+      font-size: 5em;
+      color: #fff;
+      text-shadow: 0 0 0px #fff,
+                   0 0 1px #fff,
+                   0 0 10px #fff,
+                   0 0 20px #ff00de;
+      opacity: 0;
+      animation: fadeInScale 2s ease-out forwards;
+    }
+
+    .sub-text {
+      font-family: 'Dancing Script', cursive;
+      font-size: 3em;
+      color: #d524f9;
+      text-shadow: 0 0 10px #8c1386;
+      opacity: 0;
+      animation: fadeInScale 2s ease-out 1s forwards;
+    }
+
+    @keyframes fadeInScale {
+      0% { opacity: 0; transform: scale(0.5); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .firework {
+      pointer-events: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .rocket {
+      position: absolute;
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(to top, #ff9933, transparent);
+      border-radius: 50% 50% 0 0;
+      animation: rise var(--rise-time) ease-out forwards;
+    }
+
+    .rocket::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 4px;
+      background: #ff6600;
+      border-radius: 50%;
+      filter: blur(1px);
+    }
+
+    .particle {
+      position: absolute;
+      touch-action: none;
+      top: 0;
+      left: 0;
+      opacity: 0;
+    }
+
+    @keyframes rise {
+      0% { opacity: 1; transform: translateY(100vh) scale(1); }
+      75% { opacity: 1; }
+      100% { transform: translateY(var(--top)) scale(1); opacity: 0; }
+    }
+
+    @keyframes burst {
+      0% { opacity: 1; transform: translate(var(--sx), var(--sy)) scale(1); }
+      35% { opacity: 1; }
+      100% { opacity: 0; transform: translate(calc(var(--sx) + var(--dx)), calc(var(--sy) + var(--dy))) scale(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="celebration-text">
+    <div class="main-text">Happy New Year</div>
+    <hr ;"> 
+    <div class="sub-text">2025</div>
+  </div>
+
+  <script>
+    class Firework {
+      constructor(canvasWidth, canvasHeight) {
+        this.width = canvasWidth;
+        this.height = canvasHeight;
+        this.colors = [
+          ['#ff0000', '#ff7777'], // Red
+          ['#ffd700', '#ffef99'], // Gold
+          ['#00ff00', '#99ff99'], // Green
+          ['#00ffff', '#99ffff'], // Cyan
+          ['#ff00ff', '#ff99ff'], // Magenta
+          ['#ffffff', '#dddddd'], // White
+          ['#ff4400', '#ff8866']  // Orange
+        ];
+      }
+
+      createRocket() {
+        const rocket = document.createElement('div');
+        rocket.className = 'rocket';
+        const x = Math.random() * (this.width - 100) + 50;
+        const top = -(Math.random() * this.height * 0.5 + this.height * 0.2);
+        const riseTime = 1.5 + Math.random() * 0.5;
+        
+        rocket.style.left = x + 'px';
+        rocket.style.setProperty('--top', top + 'px');
+        rocket.style.setProperty('--rise-time', riseTime + 's');
+        
+        document.body.appendChild(rocket);
+
+        setTimeout(() => {
+          this.explode(x, Math.abs(top));
+          rocket.remove();
+        }, riseTime * 1000);
+      }
+
+      explode(x, y) {
+        const particles = document.createDocumentFragment();
+        const particleCount = 150;
+        const angleStep = (2 * Math.PI) / particleCount;
+        const colors = this.colors[Math.floor(Math.random() * this.colors.length)];
+
+        for (let i = 0; i < particleCount; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'particle';
+          
+          const angle = angleStep * i;
+          const velocity = 100 + Math.random() * 50;
+          const size = Math.random() * 3 + 1;
+          
+          const dx = Math.cos(angle) * velocity;
+          const dy = Math.sin(angle) * velocity;
+          
+          particle.style.width = size + 'px';
+          particle.style.height = size + 'px';
+          particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+          particle.style.borderRadius = '50%';
+          particle.style.boxShadow = `0 0 ${size * 2}px ${size}px ${colors[0]}`;
+          
+          particle.style.setProperty('--sx', x + 'px');
+          particle.style.setProperty('--sy', y + 'px');
+          particle.style.setProperty('--dx', dx + 'px');
+          particle.style.setProperty('--dy', (dy + 50) + 'px');
+          
+          const duration = 0.8 + Math.random() * 0.3;
+          particle.style.animation = `burst ${duration}s cubic-bezier(0.1, 0.3, 0.5, 1) forwards`;
+          
+          particles.appendChild(particle);
+          setTimeout(() => particle.remove(), duration * 1000);
+        }
+        
+        document.body.appendChild(particles);
+      }
+
+      start() {
+        const launch = () => {
+          this.createRocket();
+          setTimeout(launch, Math.random() * 300 + 300); // Even more frequent launches
+        };
+
+        // Launch multiple fireworks initially
+        for (let i = 0; i < 5; i++) {
+          setTimeout(() => this.createRocket(), i * 200);
+        }
+        setTimeout(launch, 1000);
+      }
+    }
+
+    // Initialize
+    const firework = new Firework(window.innerWidth, window.innerHeight);
+    firework.start();
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      firework.width = window.innerWidth;
+      firework.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
